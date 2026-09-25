@@ -28,6 +28,10 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 
+# username = user
+# password = user123
+
+
 # Application definition
 
 INSTALLED_APPS = [
