@@ -1,40 +1,41 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Prediction History</title>
-</head>
-<body>
-    <p><a href="{% url 'predict' %}">← Back to Predict</a> | Logged in as {{ user.username }} | <a href="{% url 'logout' %}">Logout</a></p>
+{% extends 'predictor/base.html' %}
+{% block title %}History{% endblock %}
+{% block content %}
 
-    <h2>Your Prediction History</h2>
+<h2>Your Prediction History</h2>
+<p class="section-sub">Every estimate you've generated, most recent first.</p>
 
-    {% if predictions %}
-        <table border="1" cellpadding="6">
+{% if predictions %}
+<div class="card">
+    <div class="table-wrap">
+    <table>
+        <tr>
+            <th>Brand</th>
+            <th>Model</th>
+            <th>Year</th>
+            <th>Mileage</th>
+            <th>Price (USD)</th>
+            <th>Price (NPR)</th>
+            <th>Date</th>
+            <th></th>
+        </tr>
+        {% for p in predictions %}
             <tr>
-                <th>Brand</th>
-                <th>Model</th>
-                <th>Year</th>
-                <th>Mileage</th>
-                <th>Predicted Price (USD)</th>
-                <th>Predicted Price (NPR)</th>
-                <th>Date</th>
-                <th></th>
+                <td>{{ p.brand }}</td>
+                <td>{{ p.model_name }}</td>
+                <td>{{ p.model_year }}</td>
+                <td>{{ p.mileage }}</td>
+                <td>${{ p.predicted_price_usd }}</td>
+                <td>NPR {{ p.predicted_price_npr }}</td>
+                <td class="muted">{{ p.created_at|date:"M d, Y H:i" }}</td>
+                <td><a href="{% url 'delete_history' p.pk %}" class="delete-link">Delete</a></td>
             </tr>
-            {% for p in predictions %}
-                <tr>
-                    <td>{{ p.brand }}</td>
-                    <td>{{ p.model_name }}</td>
-                    <td>{{ p.model_year }}</td>
-                    <td>{{ p.mileage }}</td>
-                    <td>${{ p.predicted_price_usd }}</td>
-                    <td>NPR {{ p.predicted_price_npr }}</td>
-                    <td>{{ p.created_at|date:"M d, Y H:i" }}</td>
-                    <td><a href="{% url 'delete_history' p.pk %}">Delete</a></td>
-                </tr>
-            {% endfor %}
-        </table>
-    {% else %}
-        <p>No predictions yet. <a href="{% url 'predict' %}">Make your first one.</a></p>
-    {% endif %}
-</body>
-</html>
+        {% endfor %}
+    </table>
+    </div>
+</div>
+{% else %}
+<p class="muted">No predictions yet. <a href="{% url 'predict' %}">Make your first one.</a></p>
+{% endif %}
+
+{% endblock %}

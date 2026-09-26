@@ -1,16 +1,16 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Confirm Delete</title>
-</head>
-<body>
+{% extends 'predictor/base.html' %}
+{% block title %}Confirm Delete{% endblock %}
+{% block content %}
+
+<div class="card auth-card">
     <h2>Delete this prediction?</h2>
-    <p>{{ prediction.brand }} {{ prediction.model_name }} ({{ prediction.model_year }}) - ${{ prediction.predicted_price_usd }}</p>
+    <p class="muted">{{ prediction.brand }} {{ prediction.model_name }} ({{ prediction.model_year }}) — ${{ prediction.predicted_price_usd }}</p>
 
     <form method="post">
         {% csrf_token %}
-        <button type="submit">Yes, delete</button>
+        <button type="submit" class="btn" style="background: var(--negative);">Yes, delete</button>
     </form>
-    <a href="{% url 'history' %}">Cancel</a>
-</body>
-</html>
+    <p class="auth-switch"><a href="{% url 'history' %}">Cancel</a></p>
+</div>
+
+{% endblock %}
