@@ -4,6 +4,9 @@ from django.contrib.auth import login
 import requests
 from django.conf import settings
 from .forms import CarPredictionForm
+from django.contrib.auth.decorators import login_required
+from .models import PredictionHistory
+from django.shortcuts import get_object_or_404
 
 def signup_view(request):
     if request.method == 'POST':
@@ -34,6 +37,23 @@ def predict_view(request):
                 )
                 if response.status_code == 200:
                     result = response.json()
+
+                    PredictionHistory.objects.create(
+                        user=request.user,
+                        brand=payload['brand'],
+                        model_name=payload['model'],
+                        model_year=payload['model_year'],
+                        mileage=payload['mileage'],
+                        fuel_type=payload['fuel_type'],
+                        transmission=payload['transmission'],
+                        accident=payload['accident'],
+                        clean_title=payload['clean_title'],
+                        engine_hp=payload['engine_hp'],
+                        engine_liters=payload['engine_liters'],
+                        engine_cylinders=payload['engine_cylinders'],
+                        predicted_price_usd=result['predicted_price_usd'],
+                        predicted_price_npr=result['predicted_price_npr'],
+                    )
                 else:
                     error = f"Prediction service returned an error: {response.status_code}"
             except requests.exceptions.ConnectionError:
@@ -46,3 +66,16 @@ def predict_view(request):
         'result': result,
         'error': error,
     })
+
+def history_view(request):
+    predictions = PredictionHistory.objects.filter(user=request.user)
+    return render(request, 'predictor/history.html', {'predictions': predictions})
+
+
+def delete_history_view(request, pk):
+    prediction = get_object_or_404(PredictionHistory, pk=pk, user=request.user)
+    if request.method == 'POST':
+        prediction.delete()
+        return redirect('history')
+    return render(request, 'predictor/confirm_delete.html', {'prediction': prediction})
+

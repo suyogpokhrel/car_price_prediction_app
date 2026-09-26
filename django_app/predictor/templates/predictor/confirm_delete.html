@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Confirm Delete</title>
+</head>
+<body>
+    <h2>Delete this prediction?</h2>
+    <p>{{ prediction.brand }} {{ prediction.model_name }} ({{ prediction.model_year }}) - ${{ prediction.predicted_price_usd }}</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Yes, delete</button>
+    </form>
+    <a href="{% url 'history' %}">Cancel</a>
+</body>
+</html>
