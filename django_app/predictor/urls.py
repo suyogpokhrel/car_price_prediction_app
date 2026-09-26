@@ -10,5 +10,5 @@ urlpatterns = [
     path('login/', auth_views.LoginView.as_view(template_name='predictor/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('signup/', views.signup_view, name='signup'),
-    path('insights/', login_required(views.model_insights_view, login_url='login'), name='model_insights'),
+    path('insights/', views.model_insights_view, name='model_insights'),
 ]

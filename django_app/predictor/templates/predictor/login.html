@@ -1,15 +1,21 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Login</title>
-</head>
-<body>
+{% extends 'predictor/base.html' %}
+{% block title %}Login{% endblock %}
+{% block content %}
+
+<div class="card auth-card">
     <h2>Login</h2>
     <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Login</button>
+        {% for field in form %}
+            <div class="field-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}<div class="field-errors">{{ field.errors }}</div>{% endif %}
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn">Login</button>
     </form>
-    <p>Don't have an account? <a href="{% url 'signup' %}">Sign up</a></p>
-</body>
-</html>
+    <p class="auth-switch">Don't have an account? <a href="{% url 'signup' %}">Sign up</a></p>
+</div>
+
+{% endblock %}

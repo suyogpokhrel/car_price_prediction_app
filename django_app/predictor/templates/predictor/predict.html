@@ -1,98 +1,114 @@
-<!DOCTYPE html>
-<html>
+{% extends 'predictor/base.html' %}
+{% block title %}Predict | AutoValue{% endblock %}
+{% block content %}
 
-<head>
-    <title>Car Price Predictor</title>
-</head>
+<h2>Estimate a car's price</h2>
+<p class="section-sub">Enter the car's details below to get an instant estimate.</p>
 
-<body>
-    <p>Logged in as {{ user.username }} | <a href="{% url 'history' %}">History</a> | <a href="{% url 'model_insights' %}">Model Insights</a> | <a href="{% url 'logout' %}">Logout</a></p>
+{% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+{% endif %}
 
-    <h2>Car Price Predictor</h2>
-
-    {% if error %}
-    <p style="color: red;">{{ error }}</p>
-    {% endif %}
-
+<div class="card">
     <form method="post">
         {% csrf_token %}
-        {% for field in form %}
-        <p>
-            {{ field.label_tag }} {{ field }}
-            {% if field.help_text %}<br><small>{{ field.help_text }}</small>{% endif %}
-            {% if field.errors %}<br><span style="color: red;">{{ field.errors }}</span>{% endif %}
-        </p>
-        {% endfor %}
-        <button type="submit">Predict Price</button>
+        <div class="form-grid">
+            {% for field in form %}
+                <div class="field-group {% if field.name == 'model' %}full{% endif %}">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}<div class="field-help">{{ field.help_text }}</div>{% endif %}
+                    {% if field.errors %}<div class="field-errors">{{ field.errors }}</div>{% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        <button type="submit" class="btn">Predict Price</button>
     </form>
+</div>
 
-    {% if result %}
-    <hr>
-    <h3>Estimated Price</h3>
-    <p><strong>${{ result.predicted_price_usd }}</strong> USD</p>
-    <p>≈ NPR {{ result.predicted_price_npr }} (approximate, rate: {{ result.npr_rate_used }})</p>
-
-    <h4>Why this price</h4>
-    <canvas id="contributionChart" width="500" height="300"></canvas>
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script>
-        const ctx = document.getElementById('contributionChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: [{% for item in result.feature_contributions %}"{{ item.feature }}",{% endfor %}],
-            datasets: [{
-                label: 'Feature Importance',
-                data: [{% for item in result.feature_contributions %}{{ item.importance }}, {% endfor %}],
-            backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                    }]
-                },
-            options: {
-            indexAxis: 'y',
-            plugins: { legend: { display: false } },
-            scales: { x: { beginAtZero: true } }
-        }
-            });
-    </script>
-    {% endif %}
-
+{% if result %}
+<div class="card">
+    <div class="price-hero">
+        <div class="price-usd">${{ result.predicted_price_usd }}</div>
+        <div class="price-npr">≈ NPR {{ result.predicted_price_npr }} (approximate, rate: {{ result.npr_rate_used }})</div>
+    </div>
     {% if result.comparison.available %}
-    <h4>How this compares</h4>
-    <p>Based on {{ result.comparison.similar_car_count }} similar cars (same brand, similar age).</p>
-    <canvas id="comparisonChart" width="400" height="250"></canvas>
-
-    <script>
-        const ctx2 = document.getElementById('comparisonChart').getContext('2d');
-        new Chart(ctx2, {
-            type: 'bar',
-            data: {
-                labels: ['Predicted Price', 'Average Similar Car'],
-                datasets: [{
-                    label: 'Price (USD)',
-                    data: [{{ result.predicted_price_usd }}, {{ result.comparison.average_price_usd }}],
-            backgroundColor: ['rgba(75, 192, 120, 0.6)', 'rgba(201, 203, 207, 0.6)'],
-        }]
-                },
-            options: {
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true } }
-        }
-            });
-    </script>
-
-    <p>
-        This prediction is
-        {% if result.comparison.predicted_vs_average_pct >= 0 %}
-        {{ result.comparison.predicted_vs_average_pct }}% above
-        {% else %}
-        {{ result.comparison.predicted_vs_average_pct }}% below
-        {% endif %}
-        the average for similar cars.
-    </p>
-    {% else %}
-    <p><em>Not enough similar cars in our data to show a comparison.</em></p>
+    <div class="comparison-note">
+        Based on {{ result.comparison.similar_car_count }} similar cars, this is
+        <span class="{% if result.comparison.predicted_vs_average_pct >= 0 %}pct-positive{% else %}pct-negative{% endif %}">
+            {{ result.comparison.predicted_vs_average_pct }}%
+        </span>
+        {% if result.comparison.predicted_vs_average_pct >= 0 %}above{% else %}below{% endif %} the average.
+    </div>
     {% endif %}
-</body>
+</div>
 
-</html>
+<div class="card chart-card">
+    <h3>Why this price</h3>
+    <canvas id="contributionChart" width="500" height="280"></canvas>
+</div>
+
+{% if result.comparison.available %}
+<div class="card chart-card">
+    <h3>How this compares</h3>
+    <p class="section-sub">Based on {{ result.comparison.similar_car_count }} similar cars (same brand, similar age).</p>
+    <canvas id="comparisonChart" width="400" height="250"></canvas>
+</div>
+{% else %}
+<p class="muted">Not enough similar cars in our data to show a comparison.</p>
+{% endif %}
+{% endif %}
+
+{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block extra_scripts %}
+{% if result %}
+<script>
+Chart.defaults.color = '#9CA3AF';
+Chart.defaults.borderColor = '#2B313B';
+
+const ctx = document.getElementById('contributionChart').getContext('2d');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: [{% for item in result.feature_contributions %}"{{ item.feature }}",{% endfor %}],
+        datasets: [{
+            label: 'Feature Importance',
+            data: [{% for item in result.feature_contributions %}{{ item.importance }},{% endfor %}],
+            backgroundColor: '#E8A33D',
+            borderRadius: 4,
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: { x: { beginAtZero: true } }
+    }
+});
+
+{% if result.comparison.available %}
+const ctx2 = document.getElementById('comparisonChart').getContext('2d');
+new Chart(ctx2, {
+    type: 'bar',
+    data: {
+        labels: ['Predicted Price', 'Average Similar Car'],
+        datasets: [{
+            label: 'Price (USD)',
+            data: [{{ result.predicted_price_usd }}, {{ result.comparison.average_price_usd }}],
+            backgroundColor: ['#E8A33D', '#3A414C'],
+            borderRadius: 4,
+        }]
+    },
+    options: {
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+    }
+});
+{% endif %}
+</script>
+{% endif %}
+{% endblock %}
