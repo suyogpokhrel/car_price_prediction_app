@@ -8,6 +8,7 @@ import numpy as np
 app = FastAPI(title="Car Price Prediction API")
 
 model = joblib.load("car_price_model.pkl")
+reference_df = pd.read_csv("reference_prices.csv")
 
 USD_TO_NPR_RATE = 152.0  # approximate reference rate, update as needed
 TRAINING_REFERENCE_YEAR = 2025  # must match df['car_age'] = 2025 - model_year used in training
@@ -79,9 +80,28 @@ def predict_price(car: CarInput):
         for name, imp in contributions
     ]
 
+        # "How this compares" — average price of similar cars (same brand, age within ±3 years)
+    similar_cars = reference_df[
+        (reference_df["brand"] == car.brand) &
+        (reference_df["car_age"].between(car_age - 3, car_age + 3))
+    ]
+
+    if len(similar_cars) >= 3:
+        comparison = {
+            "available": True,
+            "similar_car_count": int(len(similar_cars)),
+            "average_price_usd": round(float(similar_cars["price"].mean()), 2),
+            "predicted_vs_average_pct": round(
+                ((predicted_price_usd - similar_cars["price"].mean()) / similar_cars["price"].mean()) * 100, 1
+            ),
+        }
+    else:
+        comparison = {"available": False, "similar_car_count": int(len(similar_cars))}
+
     return {
         "predicted_price_usd": round(predicted_price_usd, 2),
         "predicted_price_npr": round(predicted_price_npr, 2),
         "npr_rate_used": USD_TO_NPR_RATE,
         "feature_contributions": feature_contributions,
+        "comparison": comparison,
     }
