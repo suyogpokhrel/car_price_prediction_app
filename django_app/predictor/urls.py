@@ -11,4 +11,5 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('signup/', views.signup_view, name='signup'),
     path('insights/', views.model_insights_view, name='model_insights'),
+    path('history/<int:pk>/', login_required(views.history_detail_view, login_url='login'), name='history_detail'),
 ]

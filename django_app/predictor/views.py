@@ -56,6 +56,8 @@ def predict_view(request):
                         engine_cylinders=payload['engine_cylinders'],
                         predicted_price_usd=result['predicted_price_usd'],
                         predicted_price_npr=result['predicted_price_npr'],
+                        feature_contributions=result['feature_contributions'],
+                        comparison=result['comparison'],
                     )
                 else:
                     error = f"Prediction service returned an error: {response.status_code}"
@@ -114,3 +116,7 @@ def model_insights_view(request):
         'actual_vs_predicted': insights_data['actual_vs_predicted'],
         'price_distribution': insights_data['price_distribution'],
     })
+
+def history_detail_view(request, pk):
+    prediction = get_object_or_404(PredictionHistory, pk=pk, user=request.user)
+    return render(request, 'predictor/history_detail.html', {'prediction': prediction})

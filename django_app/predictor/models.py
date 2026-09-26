@@ -17,6 +17,8 @@ class PredictionHistory(models.Model):
     engine_cylinders = models.FloatField()
     predicted_price_usd = models.FloatField()
     predicted_price_npr = models.FloatField()
+    feature_contributions = models.JSONField(null=True, blank=True)
+    comparison = models.JSONField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

@@ -21,7 +21,7 @@
         </tr>
         {% for p in predictions %}
             <tr>
-                <td>{{ p.brand }}</td>
+                <td><a href="{% url 'history_detail' p.pk %}">{{ p.brand }}</a></td>
                 <td>{{ p.model_name }}</td>
                 <td>{{ p.model_year }}</td>
                 <td>{{ p.mileage }}</td>

@@ -1,0 +1,97 @@
+{% extends 'predictor/base.html' %}
+{% block title %}Prediction Detail{% endblock %}
+{% block content %}
+
+<p><a href="{% url 'history' %}">&larr; Back to History</a></p>
+
+<h2>{{ prediction.brand }} {{ prediction.model_name }} ({{ prediction.model_year }})</h2>
+<p class="section-sub">Predicted on {{ prediction.created_at|date:"M d, Y H:i" }}</p>
+
+<div class="card">
+    <div class="price-hero">
+        <div class="price-usd">${{ prediction.predicted_price_usd }}</div>
+        <div class="price-npr">≈ NPR {{ prediction.predicted_price_npr }}</div>
+    </div>
+    <div class="table-wrap">
+    <table>
+        <tr><th>Mileage</th><td>{{ prediction.mileage }}</td></tr>
+        <tr><th>Fuel type</th><td>{{ prediction.fuel_type }}</td></tr>
+        <tr><th>Transmission</th><td>{{ prediction.transmission }}</td></tr>
+        <tr><th>Accident</th><td>{{ prediction.accident }}</td></tr>
+        <tr><th>Clean title</th><td>{{ prediction.clean_title }}</td></tr>
+        <tr><th>Engine HP</th><td>{{ prediction.engine_hp }}</td></tr>
+        <tr><th>Engine liters</th><td>{{ prediction.engine_liters }}</td></tr>
+        <tr><th>Engine cylinders</th><td>{{ prediction.engine_cylinders }}</td></tr>
+    </table>
+    </div>
+</div>
+
+{% if prediction.feature_contributions %}
+<div class="card chart-card">
+    <h3>Why this price</h3>
+    <canvas id="contributionChart" width="500" height="280"></canvas>
+</div>
+{% endif %}
+
+{% if prediction.comparison.available %}
+<div class="card chart-card">
+    <h3>How this compares</h3>
+    <p class="section-sub">Based on {{ prediction.comparison.similar_car_count }} similar cars.</p>
+    <canvas id="comparisonChart" width="400" height="250"></canvas>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+Chart.defaults.color = '#9CA3AF';
+Chart.defaults.borderColor = '#2B313B';
+
+{% if prediction.feature_contributions %}
+const contributions = {{ prediction.feature_contributions|safe }};
+const ctx = document.getElementById('contributionChart').getContext('2d');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: contributions.map(c => c.feature),
+        datasets: [{
+            label: 'Feature Importance',
+            data: contributions.map(c => c.importance),
+            backgroundColor: '#E8A33D',
+            borderRadius: 4,
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: { x: { beginAtZero: true } }
+    }
+});
+{% endif %}
+
+{% if prediction.comparison.available %}
+const ctx2 = document.getElementById('comparisonChart').getContext('2d');
+new Chart(ctx2, {
+    type: 'bar',
+    data: {
+        labels: ['Predicted Price', 'Average Similar Car'],
+        datasets: [{
+            label: 'Price (USD)',
+            data: [{{ prediction.predicted_price_usd }}, {{ prediction.comparison.average_price_usd }}],
+            backgroundColor: ['#E8A33D', '#3A414C'],
+            borderRadius: 4,
+        }]
+    },
+    options: {
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+    }
+});
+{% endif %}
+</script>
+{% endblock %}
