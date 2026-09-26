@@ -7,6 +7,9 @@ from .forms import CarPredictionForm
 from django.contrib.auth.decorators import login_required
 from .models import PredictionHistory
 from django.shortcuts import get_object_or_404
+import json
+import os
+
 
 def signup_view(request):
     if request.method == 'POST':
@@ -79,3 +82,35 @@ def delete_history_view(request, pk):
         return redirect('history')
     return render(request, 'predictor/confirm_delete.html', {'prediction': prediction})
 
+
+def model_insights_view(request):
+    model_comparison = [
+        {'name': 'Linear Regression', 'r2': 0.7441, 'mae': 0.2637},
+        {'name': 'Random Forest', 'r2': 0.8228, 'mae': 0.2285},
+        {'name': 'Gradient Boosting', 'r2': 0.8214, 'mae': 0.2313},
+    ]
+
+    feature_importance = [
+        {'feature': 'log_milage', 'importance': 0.5094},
+        {'feature': 'engine_hp', 'importance': 0.1788},
+        {'feature': 'car_age', 'importance': 0.1282},
+        {'feature': 'engine_liters', 'importance': 0.0518},
+        {'feature': 'brand_Porsche', 'importance': 0.0133},
+        {'feature': 'brand_Lamborghini', 'importance': 0.0104},
+        {'feature': 'brand_Rolls-Royce', 'importance': 0.0053},
+        {'feature': 'transmission_Dual-Clutch', 'importance': 0.0050},
+        {'feature': 'engine_cylinders', 'importance': 0.0044},
+        {'feature': 'fuel_type_Diesel', 'importance': 0.0038},
+    ]
+
+    data_path = os.path.join(os.path.dirname(__file__), 'model_insights_data.json')
+    with open(data_path) as f:
+        insights_data = json.load(f)
+
+    return render(request, 'predictor/model_insights.html', {
+        'model_comparison': model_comparison,
+        'feature_importance': feature_importance,
+        'deployed_model': 'Random Forest',
+        'actual_vs_predicted': insights_data['actual_vs_predicted'],
+        'price_distribution': insights_data['price_distribution'],
+    })
